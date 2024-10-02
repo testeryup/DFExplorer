@@ -1,0 +1,10 @@
+D:\cipipi\DFExplorer\DFExplorer\bin\Debug\DFExplorer.exe.config
+D:\cipipi\DFExplorer\DFExplorer\bin\Debug\DFExplorer.exe
+D:\cipipi\DFExplorer\DFExplorer\bin\Debug\DFExplorer.pdb
+D:\cipipi\DFExplorer\DFExplorer\obj\Debug\DFExplorer.csproj.AssemblyReference.cache
+D:\cipipi\DFExplorer\DFExplorer\obj\Debug\DFExplorer.Form1.resources
+D:\cipipi\DFExplorer\DFExplorer\obj\Debug\DFExplorer.Properties.Resources.resources
+D:\cipipi\DFExplorer\DFExplorer\obj\Debug\DFExplorer.csproj.GenerateResource.cache
+D:\cipipi\DFExplorer\DFExplorer\obj\Debug\DFExplorer.csproj.CoreCompileInputs.cache
+D:\cipipi\DFExplorer\DFExplorer\obj\Debug\DFExplorer.exe
+D:\cipipi\DFExplorer\DFExplorer\obj\Debug\DFExplorer.pdb
