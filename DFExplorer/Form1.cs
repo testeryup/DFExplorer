@@ -24,14 +24,6 @@ namespace DFExplorer
         {
 
             InitializeComponent();
-            //dgvFiles = new DataGridView
-            //{
-            //    Dock = DockStyle.Fill,
-            //    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-            //    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-            //    MultiSelect = true
-            //};
-            //Controls.Add(dgvFiles);
         }
         
 
@@ -63,6 +55,89 @@ namespace DFExplorer
         }
         private void dgvFiles_CellClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (e.ColumnIndex == dgvFiles.Columns["btnDelete"].Index && e.RowIndex >= 0)
+            {
+                // Get the file path from the current row
+                string filePath = dgvFiles.Rows[e.RowIndex].Cells["PathFile"].Value.ToString();
+
+                // Optionally delete the file from the file system (be cautious with this)
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        File.Delete(filePath);
+                        MessageBox.Show($"File deleted: {filePath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error deleting file: {ex.Message}");
+                    }
+                }
+
+                // Remove the row from the DataGridView
+                dgvFiles.Rows.RemoveAt(e.RowIndex);
+                //LoadFilesToTable(filePath);
+                return;
+            }
+            if (e.ColumnIndex == dgvFiles.Columns["btnHide"].Index && e.RowIndex >= 0)
+            {
+                // Get the file path from the current row
+                string filePath = dgvFiles.Rows[e.RowIndex].Cells["PathFile"].Value.ToString();
+
+                // Check if the file exists before trying to hide it
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        // Set the file attributes to hidden
+                        File.SetAttributes(filePath, File.GetAttributes(filePath) | FileAttributes.Hidden);
+
+                        MessageBox.Show($"File hidden: {filePath}");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error hiding file: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"File does not exist: {filePath}");
+                }
+                return;
+            }
+            if (e.ColumnIndex == dgvFiles.Columns["unHide"].Index && e.RowIndex >= 0)
+            {
+                // Get the file path from the current row
+                string filePath = dgvFiles.Rows[e.RowIndex].Cells["PathFile"].Value.ToString();
+
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        // Remove the Hidden attribute
+                        FileAttributes attributes = File.GetAttributes(filePath);
+
+                        // If the file is hidden, remove the Hidden attribute
+                        if ((attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                        {
+                            File.SetAttributes(filePath, attributes & ~FileAttributes.Hidden);
+                            MessageBox.Show($"File unhidden: {filePath}");
+                        }
+                        else
+                        {
+                            MessageBox.Show($"File is not hidden: {filePath}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error unhiding file: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"File does not exist: {filePath}");
+                }
+            }
             DataGridViewCheckBoxCell cell = this.dgvFiles.CurrentCell as DataGridViewCheckBoxCell;
 
             if (cell != null && !cell.ReadOnly)
@@ -131,7 +206,9 @@ namespace DFExplorer
                 {
                     byte[] fileContent = File.ReadAllBytes(file); // Read the file as bytes
                     byte[] encryptedContent = EncryptionHelper.EncryptAES(fileContent, aesKey, aesIV);
-                    File.WriteAllBytes(file + ".df", encryptedContent); // Save as .df
+
+                    // Overwrite the original file with encrypted content (including header)
+                    File.WriteAllBytes(file, encryptedContent);
                 }
                 MessageBox.Show("Selected files encrypted with AES successfully!");
                 LoadFilesToTable(filePath); // Reload the files after encryption
@@ -147,32 +224,24 @@ namespace DFExplorer
                 return;
             }
 
-            // Check if all selected files have the correct encrypted ".df" extension
-            if (selectedFiles.Any(file => !file.EndsWith(".df")))
-            {
-                MessageBox.Show("Some selected files are not encrypted (missing .df extension). Please select only encrypted files.");
-                return;
-            }
-
-            // Prepare a string that lists all the selected files
             string selectedFileNames = string.Join("\n", selectedFiles.Select(f => Path.GetFileName(f)));
-
-            // Ask user to confirm decryption for all selected files
             DialogResult result = MessageBox.Show($"Are you sure you want to decrypt the following files with AES?\n{selectedFileNames}",
                                                   "Confirm Decryption", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.Yes)
             {
                 foreach (string file in selectedFiles)
                 {
-                    if (!file.EndsWith(".df"))
-                    {
-                        MessageBox.Show($"File {file} is not encrypted (.df file expected).");
-                        continue;
-                    }
-
                     byte[] encryptedContent = File.ReadAllBytes(file); // Read the encrypted bytes
-                    byte[] decryptedContent = EncryptionHelper.DecryptAES(encryptedContent, aesKey, aesIV);
-                    File.WriteAllBytes(file.Replace(".df", ""), decryptedContent); // Save decrypted file
+
+                    try
+                    {
+                        byte[] decryptedContent = EncryptionHelper.DecryptAES(encryptedContent, aesKey, aesIV);
+                        File.WriteAllBytes(file, decryptedContent); // Overwrite with decrypted content
+                    }
+                    catch (InvalidOperationException ex)
+                    {
+                        MessageBox.Show(ex.Message); // If the file is not encrypted with AES
+                    }
                 }
                 MessageBox.Show("Selected files decrypted with AES successfully!");
                 LoadFilesToTable(filePath); // Reload the files after decryption
@@ -242,7 +311,5 @@ namespace DFExplorer
                 }
             }
         }
-
-        
     }
 }

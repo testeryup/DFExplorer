@@ -69,7 +69,11 @@ namespace DFExplorer
                 {
                     using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
                     {
-                        csEncrypt.Write(plainBytes, 0, plainBytes.Length);
+                        // Write a custom header (e.g., "AESENCRYPTED")
+                        byte[] header = Encoding.UTF8.GetBytes("dfxplore");
+                        msEncrypt.Write(header, 0, header.Length); // Write header to the stream
+
+                        csEncrypt.Write(plainBytes, 0, plainBytes.Length); // Write the encrypted content
                     }
                     return msEncrypt.ToArray();
                 }
@@ -87,6 +91,16 @@ namespace DFExplorer
 
                 using (MemoryStream msDecrypt = new MemoryStream(cipherBytes))
                 {
+                    // Read and validate the header
+                    byte[] header = new byte[8]; // "AESENCRYPTED" is 11 bytes
+                    msDecrypt.Read(header, 0, header.Length);
+                    string headerString = Encoding.UTF8.GetString(header);
+
+                    if (headerString != "dfxplore")
+                    {
+                        throw new InvalidOperationException("File is not AES encrypted.");
+                    }
+
                     using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
                     {
                         using (MemoryStream resultStream = new MemoryStream())
